@@ -33,10 +33,9 @@ class Human(Agent):
 
     def make_move(self, board: Board, side_to_move: int) -> Move:
         while True:
-            board.draw()
             s = input('Please make a move: ')
             s = s.split()
             row, col = int(s[0]), int(s[1])
             move = Move(side=side_to_move, pos=Position(row, col))
-            if board.check_move(move).value != Move_Type.INVALID:
+            if board.check_move(move) != Move_Type.INVALID:
                 return move

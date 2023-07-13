@@ -8,6 +8,7 @@ class Game:
     def __init__(self, board: Board=None, side_to_move=RED, game_mode: Game_Mode=Game_Mode.MAN_VS_MAN) -> None:
         self.game_mode = game_mode
         self.side_to_move = side_to_move
+        self.games_played = 1
         self.red_wins = 0
         self.black_wins = 0
         self.red_player = None
@@ -50,22 +51,25 @@ class Game:
         while True:
             red_row, black_row = random.randint(0, NUM_ROWS - 1), random.randint(0, NUM_ROWS - 1)
             red_col, black_col = random.randint(0, NUM_COLS - 1), random.randint(0, NUM_COLS - 1)
-            print(red_row, red_col, black_row, black_col)
             if red_row != black_row or red_col != black_col:
                 red_king_pos, black_king_pos = Position(red_row, red_col), Position(black_row, black_col)
                 return (red_king_pos, black_king_pos)
             
     def game_over(self, win_side: int) -> None:
         if win_side == RED:
+            print('Red has won the game!')
             self.red_wins += 1
         else:
+            print('Black has won the game!')
             self.black_wins += 1
-
+        self.games_played += 1
         self.reset()
 
     def play(self):
         win_side = None
+        print('Game number {}:'.format(self.games_played))
         while True:
+            self.board.draw()
             if self.board.check_lose(self.side_to_move):
                 win_side = 1 - self.side_to_move
                 break

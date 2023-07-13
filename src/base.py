@@ -42,7 +42,6 @@ class Board:
         self.blocks = [Block] * NUM_BLOCKS
         self.red_king_pos, self.black_king_pos = red_king_pos, black_king_pos
         self.reset()
-        self.draw()
 
     def reset(self, red_king_pos: Position=None, black_king_pos: Position=None) -> None:
         for row in range(NUM_ROWS):
@@ -99,6 +98,10 @@ class Board:
             king_pos = self.red_king_pos if move.side == RED else self.black_king_pos
             self.blocks[rc_2_pos(king_pos.row, king_pos.col)].state = Block_State.UNFOG
             print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
+            if move.side == RED:
+                self.red_king_pos = move.pos
+            else:
+                self.black_king_pos = move.pos
         return m
 
     def draw(self):
