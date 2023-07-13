@@ -69,13 +69,15 @@ class Board:
                         res += 1
         return res
 
-    @classmethod
-    def check_board(pos: Position) -> bool:
+    def check_lose(self, side: int) -> bool:
+        pos = self.red_king_pos if side == RED else self.black_king_pos
+        return self.count_move(pos) == 0
+
+    def check_board(self, pos: Position) -> bool:
         row, col = pos.row, pos.col
         return -1 < row < NUM_ROWS and -1 < col < NUM_COLS
 
-    @classmethod
-    def distance(p: Position, q: Position) -> int:
+    def distance(self, p: Position, q: Position) -> int:
         return (p.row - q.row)**2 + (p.col - q.col)**2
 
     def check_move(self, move: Move) -> Move_Type:
@@ -85,7 +87,7 @@ class Board:
         else:
             king_us_pos, king_them_pos = self.black_king_pos, self.red_king_pos
 
-        if not Board.check_board(pos) or Board.distance(pos, king_us_pos) == 0 or self.distance(pos, king_us_pos) > 2:
+        if not self.check_board(pos) or self.distance(pos, king_us_pos) == 0 or self.distance(pos, king_us_pos) > 2:
             return Move_Type.INVALID
         if pos == king_them_pos:
             return Move_Type.WIN
@@ -96,6 +98,7 @@ class Board:
         if m != Move_Type.INVALID:
             king_pos = self.red_king_pos if move.side == RED else self.black_king_pos
             self.blocks[rc_2_pos(king_pos.row, king_pos.col)].state = Block_State.UNFOG
+            print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
         return m
 
     def draw(self):
@@ -113,3 +116,4 @@ class Board:
                 else:
                     print(' - ', end='')
             print('')
+        print('')
