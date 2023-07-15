@@ -20,14 +20,17 @@ class AI(Agent):
     def make_move(self, board: Board, side_to_move: int) -> Move:
         moves = board.get_moves(side_to_move)
         if moves is not None:
-            return = Move(side_to_move, Position(moves[0].row, moves[0].col))
+            return Move(side_to_move, Position(moves[0].row, moves[0].col))
         return None
 class Human(Agent):
-    def __init__(self) -> None:
+    def __init__(self, interface='gui') -> None:
         super().__init__()
         self.type = HUMAN
+        self.interface = interface
 
     def make_move(self, board: Board, side_to_move: int) -> Move:
+        if self.interface == 'gui':
+            return None
         while True:
             s = input('Please make a move: ')
             s = s.split()
