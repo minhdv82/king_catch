@@ -5,8 +5,9 @@ from .agent import *
 
 
 class Game:
-    def __init__(self, board: Board=None, side_to_move=RED, game_mode: Game_Mode=Game_Mode.MAN_VS_MAN) -> None:
+    def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.MAN_VS_MAN, game_type=Game_Type.INVISIBLE) -> None:
         self.game_mode = game_mode
+        self.game_type = game_type
         self.side_to_move = side_to_move
         self.games_played = 1
         self.red_wins = 0

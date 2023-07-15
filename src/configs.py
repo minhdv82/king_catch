@@ -14,3 +14,8 @@ class Game_Mode(Enum):
     MAN_VS_MAN = 0
     MAN_VS_AI = 1
     AI_VS_AI = 2
+
+
+class Game_Type(Enum):
+    INVISIBLE = 0
+    VISIBLE = 1

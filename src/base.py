@@ -74,6 +74,21 @@ class Board:
                         res += 1
         return res
 
+    def get_moves(self, side_to_move: int):
+        res = []
+        king_pos = self.red_king_pos if side_to_move == RED else self.black_king_pos
+        row, col = king_pos.row, king_pos.col
+        cur_pos = rc_2_pos(row, col)
+        for r in [-1, 0, 1]:
+            for c in [-1, 0, 1]:
+                if -1 < row + r < NUM_ROWS and -1 < col + c < NUM_COLS:
+                    pos = rc_2_pos(row + r, col + c)
+                    if pos == cur_pos:
+                        continue
+                    if self.blocks[pos].state != Block_State.UNFOG:
+                        res.append(Position(row + r, col + c))
+        return res
+
     def check_lose(self, side: int) -> bool:
         pos = self.red_king_pos if side == RED else self.black_king_pos
         return self.count_move(pos) == 0

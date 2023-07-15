@@ -18,14 +18,10 @@ class AI(Agent):
         super().__init__()
         self.type = AI
     def make_move(self, board: Board, side_to_move: int) -> Move:
-        import random
-        while True:
-            row, col = random.randint(0, NUM_ROWS), random.randint(0, NUM_COLS)
-            move = Move(side=side_to_move, pos=Position(row, col))
-            if board.check_move(move).value != Move_Type.INVALID:
-                return move
-
-
+        moves = board.get_moves(side_to_move)
+        if moves is not None:
+            return = Move(side_to_move, Position(moves[0].row, moves[0].col))
+        return None
 class Human(Agent):
     def __init__(self) -> None:
         super().__init__()
