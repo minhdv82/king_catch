@@ -36,14 +36,6 @@ class Game:
         red_king_pos, black_king_pos = self.random_kings()
         self.board.reset(red_king_pos=red_king_pos, black_king_pos=black_king_pos)
         self.play()
-
-    # def move(self, move: Move) -> None:
-    #     m = self.board.make_move(move)
-    #     self.board.draw()
-    #     if m == Move_Type.WIN:
-    #         self.game_over(win_side=move.side)
-    #     elif m == Move_Type.VALID:
-    #         self.side_to_move = 1 - self.side_to_move
     
     @staticmethod
     def random_kings():
@@ -64,6 +56,11 @@ class Game:
             self.black_wins += 1
         self.games_played += 1
         self.reset()
+
+    def make_move(self, move: Move) -> Move_Type:
+        if move.side != self.side_to_move:
+            return Move_Type.INVALID
+        return self.board.make_move(move)
 
     def play(self):
         win_side = None

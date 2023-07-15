@@ -92,16 +92,19 @@ class Board:
             return Move_Type.WIN
         return Move_Type.VALID
 
-    def make_move(self, move: Move) -> Move_Type:
+    def make_move(self, move: Move, verbose=False) -> Move_Type:
         m = self.check_move(move)
         if m != Move_Type.INVALID:
             king_pos = self.red_king_pos if move.side == RED else self.black_king_pos
             self.blocks[rc_2_pos(king_pos.row, king_pos.col)].state = Block_State.UNFOG
-            print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
+            if verbose:
+                print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
             if move.side == RED:
                 self.red_king_pos = move.pos
             else:
                 self.black_king_pos = move.pos
+        elif verbose:
+            print('Invalid move!')
         return m
 
     def draw(self):
