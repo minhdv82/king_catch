@@ -1,5 +1,4 @@
 from typing import Tuple
-import random
 
 from .configs import NUM_ROWS
 

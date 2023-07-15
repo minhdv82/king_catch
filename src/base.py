@@ -29,6 +29,7 @@ class Move_Type(Enum):
     INVALID = 0
     VALID = 1
     WIN = 2
+    LOSE = 3
 
 
 class Block:
@@ -38,12 +39,13 @@ class Block:
     
 
 class Board:
-    def __init__(self, red_king_pos: Position, black_king_pos: Position) -> None:
+    def __init__(self, red_king_pos: Position, black_king_pos: Position, side_to_move: int=RED) -> None:
         self.blocks = [Block] * NUM_BLOCKS
         self.red_king_pos, self.black_king_pos = red_king_pos, black_king_pos
+        self.side_to_move = side_to_move
         self.reset()
 
-    def reset(self, red_king_pos: Position=None, black_king_pos: Position=None) -> None:
+    def reset(self, red_king_pos: Position=None, black_king_pos: Position=None, side_to_move: int=RED) -> None:
         for row in range(NUM_ROWS):
             for col in range(NUM_COLS):
                 pos = rc_2_pos(row, col)
@@ -53,6 +55,10 @@ class Board:
             self.red_king_pos = red_king_pos
         if black_king_pos is not None:
             self.black_king_pos = black_king_pos
+        self.side_to_move = side_to_move
+
+    def switch_side(self):
+        self.side_to_move = 1 - self.side_to_move
 
     def count_move(self, position: Position) -> int:
         res = 0
@@ -81,6 +87,8 @@ class Board:
 
     def check_move(self, move: Move) -> Move_Type:
         side, pos = move.side, move.pos
+        if side != self.side_to_move or self.blocks[rc_2_pos(pos.row, pos.col)].state == Block_State.UNFOG:
+            return Move_Type.INVALID
         if side == RED:
             king_us_pos, king_them_pos = self.red_king_pos, self.black_king_pos
         else:
@@ -99,10 +107,10 @@ class Board:
             self.blocks[rc_2_pos(king_pos.row, king_pos.col)].state = Block_State.UNFOG
             if verbose:
                 print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
-            if move.side == RED:
-                self.red_king_pos = move.pos
-            else:
-                self.black_king_pos = move.pos
+            king_pos.row, king_pos.col = move.pos.row, move.pos.col
+            self.switch_side()
+            if self.check_lose(self.side_to_move):
+                m = Move_Type.WIN
         elif verbose:
             print('Invalid move!')
         return m

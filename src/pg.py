@@ -33,9 +33,11 @@ class KingGame:
                         self.cursor.col = (self.cursor.col + NUM_COLS - 1) % NUM_COLS
                     elif event.key == pygame.K_RIGHT:
                         self.cursor.col = (self.cursor.col + 1) % NUM_COLS
-                    elif event.key == pygame.K_KP_ENTER:
+                    elif event.key == pygame.K_RETURN:
                         move = Move(side=self.game.side_to_move, pos=self.cursor)
                         m = self.game.make_move(move)
+                        # print(self.game.board.red_king_pos)
+                        # print(self.game.board.black_king_pos)
                         if m == Move_Type.WIN:
                             self.game_over(win_side=1-self.game.side_to_move)
             self.draw()
@@ -43,6 +45,7 @@ class KingGame:
 
     def reset(self):
         self.game.reset()
+        self.play()
 
     def quit(self):
         # self.game.quit()
@@ -56,7 +59,9 @@ class KingGame:
             for c in range(NUM_COLS):
                 color = (50, 100, 100) if blocks[rc_2_pos(r, c)].state == Block_State.UNFOG else (125, 125, 125)
                 pygame.draw.rect(self.screen, color, (c * wsz, r * hsz, hsz, wsz))
-        pygame.draw.rect(self.screen, (255, 192, 203), (self.cursor.row * hsz, self.cursor.col * wsz, hsz, wsz))
+        pygame.draw.rect(self.screen, (255, 10, 20), (self.game.board.red_king_pos.col * wsz, self.game.board.red_king_pos.row * hsz, hsz, wsz))
+        pygame.draw.rect(self.screen, (5, 5, 5), (self.game.board.black_king_pos.col * wsz, self.game.board.black_king_pos.row * hsz, hsz, wsz))
+        pygame.draw.rect(self.screen, (255, 192, 203), (self.cursor.col * wsz, self.cursor.row * hsz, hsz, wsz))
 
     def update(self):
         pass
