@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .configs import AI, HUMAN
+from .configs import Agent_Type
 from .base import *
 
 
@@ -16,7 +16,7 @@ class Agent(ABC):
 class AI(Agent):
     def __init__(self) -> None:
         super().__init__()
-        self.type = AI
+        self.type = Agent_Type.AI
     def make_move(self, board: Board, side_to_move: int) -> Move:
         moves = board.get_moves(side_to_move)
         if moves is not None:
@@ -25,7 +25,7 @@ class AI(Agent):
 class Human(Agent):
     def __init__(self, interface='gui') -> None:
         super().__init__()
-        self.type = HUMAN
+        self.type = Agent_Type.HUMAN
         self.interface = interface
 
     def make_move(self, board: Board, side_to_move: int) -> Move:

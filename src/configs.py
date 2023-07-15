@@ -1,6 +1,5 @@
 from enum import Enum
 
-AI, HUMAN = 0, 1
 RED, BLACK = 0, 1
 RED_WIN, BLACK_WIN = 0, 1
 NUM_ROWS, NUM_COLS = 8, 8
@@ -19,3 +18,8 @@ class Game_Mode(Enum):
 class Game_Type(Enum):
     INVISIBLE = 0
     VISIBLE = 1
+
+
+class Agent_Type(Enum):
+    AI = 0
+    HUMAN = 1

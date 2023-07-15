@@ -5,7 +5,7 @@ from .agent import *
 
 
 class Game:
-    def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.MAN_VS_MAN, game_type=Game_Type.INVISIBLE) -> None:
+    def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.MAN_VS_AI, game_type=Game_Type.INVISIBLE) -> None:
         self.game_mode = game_mode
         self.game_type = game_type
         self.side_to_move = side_to_move
@@ -36,7 +36,6 @@ class Game:
         self.side_to_move = RED
         red_king_pos, black_king_pos = self.random_kings()
         self.board.reset(red_king_pos=red_king_pos, black_king_pos=black_king_pos)
-        # self.play()
     
     @staticmethod
     def random_kings():
