@@ -22,6 +22,9 @@ class KingGame:
     def play(self):
         win_side = None
         while True:
+            if self.game.board.check_lose(self.game.side_to_move):
+                win_side = 1 - self.game.side_to_move
+                break
             move = None
             player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
             if player.type == Agent_Type.AI:
