@@ -1,3 +1,4 @@
+from typing import List
 from enum import Enum
 from dataclasses import dataclass
 
@@ -36,13 +37,22 @@ class Block:
     def __init__(self, state: Block_State, position: Position) -> None:
         self.state = state
         self.position = position
-    
+
+
+@dataclass
+class Game_State:
+    blocks: List[Block_State]
+    traces: List[Position]
+    king_us_pos: Position
+    king_them_pos: Position
+
 
 class Board:
     def __init__(self, red_king_pos: Position, black_king_pos: Position, side_to_move: int=RED) -> None:
         self.blocks = [Block] * NUM_BLOCKS
         self.red_king_pos, self.black_king_pos = red_king_pos, black_king_pos
         self.side_to_move = side_to_move
+        self.traces = []
         self.reset()
 
     def reset(self, red_king_pos: Position=None, black_king_pos: Position=None, side_to_move: int=RED) -> None:
@@ -120,6 +130,7 @@ class Board:
         if m != Move_Type.INVALID:
             king_pos = self.red_king_pos if move.side == RED else self.black_king_pos
             self.blocks[rc_2_pos(king_pos.row, king_pos.col)].state = Block_State.UNFOG
+            self.traces.append(Position(king_pos.row, king_pos.col))
             if verbose:
                 print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
             king_pos.row, king_pos.col = move.pos.row, move.pos.col
@@ -146,3 +157,20 @@ class Board:
                     print(' - ', end='')
             print('')
         print('')
+
+    def get_state(self, game_type=Game_Type.VISIBLE):
+        king_us_pos = Position(self.red_king_pos.row, self.red_king_pos.col) if self.side_to_move == RED else \
+              Position(self.black_king_pos.row, self.black_king_pos.col)
+        if game_type == Game_Type.VISIBLE:
+            king_them_pos = Position(self.black_king_pos.row, self.black_king_pos.col) if self.side_to_move == RED else \
+                Position(self.red_king_pos.row, self.red_king_pos.col)
+        else:
+            king_them_pos = None
+        blks = []
+        trs = []
+        for block in self.blocks:
+            blks.append(block.state)
+        for trace in self.traces:
+            trs.append(Position(trace.row, trace.col))
+
+        return Game_State(blocks=blks, traces=trs, king_us_pos=king_us_pos, king_them_pos=king_them_pos)

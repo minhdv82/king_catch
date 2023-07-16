@@ -25,7 +25,8 @@ class KingGame:
             move = None
             player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
             if player.type == Agent_Type.AI:
-                move = player.make_move(self.game.board, self.game.side_to_move)
+                game_state = self.game.board.get_state(game_type=self.game.game_type)
+                move = player.make_move(game_state, self.game.side_to_move)
             else:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
