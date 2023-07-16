@@ -71,7 +71,7 @@ class AI(Agent):
         return None
     
     def _alpha_beta_search(self, game_state: Game_State, side_to_move: int):
-        def _minimax(depth, game_state, lo, hi):
+        def _minimax(depth, game_state: Game_State, lo, hi):
             opt_val = eval_state(game_state)
             if depth == 0 or opt_val == LOSS:
                 return (opt_val, None)
@@ -89,8 +89,19 @@ class AI(Agent):
                     opt_val = res
                     opt_move = move
             return (-opt_val, opt_move)
-            
-        opt_val, opt_move = _minimax(depth=8, game_state=game_state, lo=LOSS, hi=WIN)
+        
+        if game_state.king_them_pos is None:
+            opt_val, opt_move = LOSS, None
+            last_pos = game_state.traces[-1]
+            king_thems = gen_moves(game_state.blocks, last_pos)
+            for king_them_pos in king_thems:
+                game_state.king_them_pos = king_them_pos
+                val, move = _minimax(depth=8, game_state=game_state, lo=LOSS, hi=WIN)
+                game_state.king_them_pos = None
+                if val > opt_val:
+                    opt_val, opt_move = val, move
+        else:
+            opt_val, opt_move = _minimax(depth=8, game_state=game_state, lo=LOSS, hi=WIN)
         if opt_move is not None:
             move = Position(opt_move.row, opt_move.col)
         else:
