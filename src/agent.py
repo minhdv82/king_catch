@@ -41,10 +41,12 @@ def undo_move(game_state: Game_State):
 def eval_state(game_state: Game_State) -> int:
     if game_state.king_us_pos == game_state.king_them_pos:
         return LOSS
-    moves = gen_moves(game_state.blocks, game_state.king_us_pos)
-    if len(moves) == 0:
+    moves_us, moves_them = gen_moves(game_state.blocks, game_state.king_us_pos), gen_moves(game_state.blocks, game_state.king_them_pos)
+    if len(moves_us) == 0:
         return LOSS
-    return len(moves)
+    if len(moves_them) == 0:
+        return WIN
+    return len(moves_us) - len(moves_them)
 
 
 class Agent(ABC):
