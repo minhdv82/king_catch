@@ -40,7 +40,6 @@ def undo_move(game_state: Game_State):
 
 def eval_state(game_state: Game_State) -> int:
     if game_state.king_us_pos == game_state.king_them_pos:
-        print('clash')
         return LOSS
     moves = gen_moves(game_state.blocks, game_state.king_us_pos)
     if len(moves) == 0:
@@ -73,8 +72,9 @@ class AI(Agent):
     
     def _alpha_beta_search(self, game_state: Game_State, side_to_move: int):
         def _minimax(depth, game_state, lo, hi):
-            if depth == 0:
-                return (eval_state(game_state), None)
+            opt_val = eval_state(game_state)
+            if depth == 0 or opt_val == LOSS:
+                return (opt_val, None)
             moves = gen_moves(game_state.blocks, game_state.king_us_pos)
             if len(moves) == 0:
                 return (LOSS, None)
@@ -90,11 +90,11 @@ class AI(Agent):
                     opt_move = move
             return (-opt_val, opt_move)
             
-        opt_val, opt_move = _minimax(depth=6, game_state=game_state, lo=LOSS, hi=WIN)
+        opt_val, opt_move = _minimax(depth=8, game_state=game_state, lo=LOSS, hi=WIN)
         if opt_move is not None:
             move = Position(opt_move.row, opt_move.col)
         else:
-            move = gen_moves(game_state.blocks, game_state.king_us_pos)
+            move = gen_moves(game_state.blocks, game_state.king_us_pos)[0]
             move = Position(move.row, move.col)
 
         return Move(side_to_move, move)
