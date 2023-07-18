@@ -84,44 +84,90 @@ class AI(Agent):
         return None
     
     def _alpha_beta_search(self, game_state: Game_State, side_to_move: int):
+        def _alpha_beta(game_state: Game_State, depth: int, lo: int, hi: int, lohi: int):
+            if game_state.king_them_pos == game_state.king_us_pos:
+                return (LOSS * lohi, [])
+            if depth == 0:
+                return (lohi * eval_state(game_state), [])
+            moves = gen_moves(game_state.blocks, game_state.king_us_pos)
+            if len(moves) == 0:
+                return (LOSS * lohi, [])
+            
+            if lohi > 0:
+                opt_val, opt_seq = LOSS, None
+                for move in moves:
+                    do_move(game_state, move)
+                    val, seq = _alpha_beta(game_state, depth - 1, lo, hi, -lohi)
+                    undo_move(game_state)
+                    if val >= opt_val:
+                        seq.append(move)
+                        opt_val = val
+                        opt_seq = seq
+                    lo = max(lo, opt_val)
+                    if lo >= hi:
+                        return (opt_val, opt_seq)
+                return (opt_val, opt_seq)
+            else:
+                opt_val, opt_seq = WIN, None
+                for move in moves:
+                    do_move(game_state, move)
+                    val, seq = _alpha_beta(game_state, depth - 1, lo, hi, -lohi)
+                    undo_move(game_state)
+                    if val <= opt_val:
+                        seq.append(move)
+                        opt_val = val
+                        opt_seq = seq
+                    hi = min(hi, opt_val)
+                    if lo >= hi:
+                        return (opt_val, opt_seq)
+                return (opt_val, opt_seq)
+
         def _minimax(depth, game_state: Game_State, lo, hi):
             opt_val = eval_state(game_state)
             if depth == 0 or opt_val == LOSS or opt_val == WIN:
-                return (opt_val, None)
+                return (opt_val, [])
             moves = gen_moves(game_state.blocks, game_state.king_us_pos)
-            opt_val, opt_move = WIN, None
+            opt_val, opt_move = WIN, []
             for move in moves:
                 do_move(game_state, move)
-                res, _ = _minimax(depth - 1, game_state, lo, hi)
+                res, seq = _minimax(depth - 1, game_state, lo, hi)
                 undo_move(game_state)
                 if res <= LOSS:
-                    return (WIN, move)
+                    seq.append(move)
+                    return (WIN, seq)
                 if res <= opt_val:
+                    seq.append(move)
                     opt_val = res
-                    opt_move = move
+                    opt_move = seq
             return (-opt_val, opt_move)
         
-        if game_state.king_them_pos is None:
-            opt_val, opt_move = LOSS, None
-            last_pos = game_state.traces[-1]
-            king_thems = gen_moves(game_state.blocks, last_pos)
-            for king_them_pos in king_thems:
-                game_state.king_them_pos = king_them_pos
-                val, move = _minimax(depth=AI_DEPTH, game_state=game_state, lo=LOSS, hi=WIN)
-                game_state.king_them_pos = None
-                if val > opt_val:
-                    opt_val, opt_move = val, move
-        else:
-            opt_val, opt_move = _minimax(depth=AI_DEPTH, game_state=game_state, lo=LOSS, hi=WIN)
-        if opt_move is not None:
-            move = Position(opt_move.row, opt_move.col)
+        # if game_state.king_them_pos is None:
+        #     opt_val, opt_move = LOSS, None
+        #     last_pos = game_state.traces[-1]
+        #     king_thems = gen_moves(game_state.blocks, last_pos)
+        #     for king_them_pos in king_thems:
+        #         game_state.king_them_pos = king_them_pos
+        #         val, move = _minimax(depth=AI_DEPTH, game_state=game_state, lo=LOSS, hi=WIN)
+        #         game_state.king_them_pos = None
+        #         if val > opt_val:
+        #             opt_val, opt_move = val, move
+        # else:
+        #     opt_val, opt_move = _minimax(depth=AI_DEPTH, game_state=game_state, lo=LOSS, hi=WIN)
+        opt_val, opt_move = _alpha_beta(game_state, AI_DEPTH, LOSS, WIN, 1)
+        if opt_move:
+            opt_move = opt_move[::-1]
+            move = Position(opt_move[0].row, opt_move[0].col)
         else:
             move = gen_moves(game_state.blocks, game_state.king_us_pos)[0]
             move = Position(move.row, move.col)
         if opt_val == WIN:
             print('win')
+            l = min(8, len(opt_move))
+            print(opt_move[:l])
         elif opt_val == LOSS:
             print('lose')
+            l = min(8, len(opt_move))
+            print(opt_move[:l])
 
         return Move(side_to_move, move)
 
