@@ -1,3 +1,4 @@
+import time
 import pygame
 
 from .game import Game
@@ -20,16 +21,19 @@ class KingGame:
         self.cursor = Position(0, 0)
 
     def play(self):
+        self.draw()
+        pygame.display.update()
         win_side = None
         while True:
             if self.game.board.check_lose(self.game.side_to_move):
-                win_side = 1 - self.game.side_to_move
+                win_side =  -self.game.side_to_move
                 break
             move = None
             player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
             if player.type == Agent_Type.AI:
                 game_state = self.game.board.get_state(game_type=self.game.game_type)
                 move = player.make_move(game_state, self.game.side_to_move)
+                time.sleep(1)
             else:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -48,7 +52,7 @@ class KingGame:
             if move is not None:
                 m = self.game.make_move(move)
                 if m == Move_Type.WIN:
-                    win_side = 1 - self.game.side_to_move
+                    win_side = -self.game.side_to_move
                     break
             self.draw()
             pygame.display.update()
@@ -74,7 +78,8 @@ class KingGame:
             pygame.draw.rect(self.screen, (255, 10, 20), (self.game.board.red_king_pos.col * wsz, self.game.board.red_king_pos.row * hsz, hsz, wsz))
         if self.game.game_type == Game_Type.VISIBLE or (self.game.side_to_move == BLACK and self.game.black_player.type == Agent_Type.HUMAN):
             pygame.draw.rect(self.screen, (5, 5, 5), (self.game.board.black_king_pos.col * wsz, self.game.board.black_king_pos.row * hsz, hsz, wsz))
-        pygame.draw.rect(self.screen, (255, 192, 203), (self.cursor.col * wsz, self.cursor.row * hsz, hsz, wsz))
+        if self.game.game_mode != Game_Mode.AI_VS_AI:
+            pygame.draw.rect(self.screen, (255, 192, 203), (self.cursor.col * wsz, self.cursor.row * hsz, hsz, wsz))
 
     def update(self):
         pass

@@ -1,13 +1,15 @@
 from enum import Enum
 
-RED, BLACK = 0, 1
+RED, BLACK = 1, -1
 RED_WIN, BLACK_WIN = 0, 1
-NUM_ROWS, NUM_COLS = 8, 8
+NUM_ROWS, NUM_COLS = 5, 5
 NUM_BLOCKS = NUM_ROWS * NUM_COLS
 
-SCR_WIDTH, SCR_HEIGHT = 800, 800
+SCR_WIDTH, SCR_HEIGHT = 500, 500
 FOG_COLOR = 'Brown'
 UNFOG_COLOR = 'Blue'
+
+AI_DEPTH = 100
 
 class Game_Mode(Enum):
     MAN_VS_MAN = 0

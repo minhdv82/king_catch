@@ -8,7 +8,6 @@ class Game:
     def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.MAN_VS_AI, game_type=Game_Type.VISIBLE) -> None:
         self.game_mode = game_mode
         self.game_type = game_type
-        self.side_to_move = side_to_move
         self.games_played = 1
         self.red_wins = 0
         self.black_wins = 0
@@ -18,8 +17,12 @@ class Game:
             self.board = board
         else:
             red_king_pos, black_king_pos = self.random_kings()
-            self.board = Board(red_king_pos=red_king_pos, black_king_pos=black_king_pos)
+            self.board = Board(red_king_pos=red_king_pos, black_king_pos=black_king_pos, side_to_move=side_to_move)
         self.init_players()
+
+    @property
+    def side_to_move(self):
+        return self.board.side_to_move
 
     def init_players(self):
         if self.game_mode == Game_Mode.MAN_VS_MAN:
@@ -32,10 +35,9 @@ class Game:
             self.red_player = Human()
             self.black_player = AI()
 
-    def reset(self) -> None:
-        self.side_to_move = RED
+    def reset(self, side_to_move: int=RED) -> None:
         red_king_pos, black_king_pos = self.random_kings()
-        self.board.reset(red_king_pos=red_king_pos, black_king_pos=black_king_pos)
+        self.board.reset(red_king_pos=red_king_pos, black_king_pos=black_king_pos, side_to_move=side_to_move)
     
     @staticmethod
     def random_kings():
@@ -57,31 +59,24 @@ class Game:
         self.games_played += 1
         self.reset()
 
-    def switch_side(self):
-        self.side_to_move = 1 - self.side_to_move
-
     def make_move(self, move: Move) -> Move_Type:
-        m = self.board.make_move(move)
-        if m != Move_Type.INVALID:
-            self.switch_side()
-        return m
+        return self.board.make_move(move)
 
     def play(self):
         win_side = None
         print('Game number {}:'.format(self.games_played))
         while True:
+            side_to_move = self.board.side_to_move
             self.board.draw()
-            if self.board.check_lose(self.side_to_move):
-                win_side = 1 - self.side_to_move
+            if self.board.check_lose(side_to_move):
+                win_side = -self.side_to_move
                 break
             if self.side_to_move == RED:
-                move = self.red_player.make_move(self.board, self.side_to_move)
+                move = self.red_player.make_move(self.board, side_to_move)
             else:
-                move = self.black_player.make_move(self.board, self.side_to_move)
+                move = self.black_player.make_move(self.board, side_to_move)
             m = self.board.make_move(move)
             if m == Move_Type.WIN:
                 win_side = self.side_to_move
                 break
-            else:
-                self.side_to_move = 1 - self.side_to_move
         self.game_over(win_side=win_side)

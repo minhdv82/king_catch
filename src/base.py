@@ -68,7 +68,7 @@ class Board:
         self.side_to_move = side_to_move
 
     def switch_side(self):
-        self.side_to_move = 1 - self.side_to_move
+        self.side_to_move = -self.side_to_move
 
     def count_move(self, position: Position) -> int:
         res = 0
