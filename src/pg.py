@@ -1,5 +1,5 @@
 import time
-import threading
+from threading import Thread, Event
 
 import pygame
 
@@ -8,19 +8,21 @@ from .configs import *
 from .utils import rc_2_pos
 from .base import Block_State, Position, Move, Move_Type
 
+ev = Event()
+ev.set()
 
-def _bg_move(kg):
+
+def _ai_move(kg):
+    # print('called')
+    ev.clear()
     game, side_to_move = kg.game, kg.game.side_to_move
     player = game.red_player if game.side_to_move == RED else game.black_player
-    if player.type == Agent_Type.HUMAN:
-        return
-    elif player.is_thinking:
-        return
     kg.ai_is_thinking = True
     kg.ai_return_move = None
     game_state = game.get_state()
     kg.ai_return_move = player.make_move(game_state, side_to_move)
     kg.ai_is_thinking = False
+
 
 class KingGame:
     def __init__(self, game: Game=None) -> None:
@@ -44,38 +46,32 @@ class KingGame:
         win_side = None
         while True:
             move = None
-            bg_thread = threading.Thread(target=_bg_move, args=(self,))
-            bg_thread.setDaemon(True)
-            bg_thread.start()
-            while True:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        self.quit()
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_UP:
-                            self.cursor.row = (self.cursor.row + NUM_ROWS - 1) % NUM_ROWS
-                        elif event.key == pygame.K_DOWN:
-                            self.cursor.row = (self.cursor.row + 1) % NUM_ROWS
-                        elif event.key == pygame.K_LEFT:
-                            self.cursor.col = (self.cursor.col + NUM_COLS - 1) % NUM_COLS
-                        elif event.key == pygame.K_RIGHT:
-                            self.cursor.col = (self.cursor.col + 1) % NUM_COLS
-                        elif event.key == pygame.K_RETURN and self.game.is_human_turn:
-                            move = Move(side=self.game.side_to_move, pos=self.cursor)
-                            if self.game.board.check_move(move) != Move_Type.INVALID:
-                                break
-                            else:
-                                move = None
-                self.render()
-                pygame.display.update()
-                if not self.ai_is_thinking:
-                    break
-
-            bg_thread.join()
-            if not self.game.is_human_turn:
+            player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
+            if player.type == Agent_Type.AI and ev.is_set() and not self.ai_is_thinking:
+                bg_thread = Thread(target=_ai_move, args=(self,))
+                bg_thread.setDaemon(True)
+                bg_thread.start()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        self.cursor.row = (self.cursor.row + NUM_ROWS - 1) % NUM_ROWS
+                    elif event.key == pygame.K_DOWN:
+                        self.cursor.row = (self.cursor.row + 1) % NUM_ROWS
+                    elif event.key == pygame.K_LEFT:
+                        self.cursor.col = (self.cursor.col + NUM_COLS - 1) % NUM_COLS
+                    elif event.key == pygame.K_RIGHT:
+                        self.cursor.col = (self.cursor.col + 1) % NUM_COLS
+                    elif event.key == pygame.K_RETURN and self.game.is_human_turn:
+                        move = Move(side=self.game.side_to_move, pos=self.cursor)
+            if not self.game.is_human_turn and not self.ai_is_thinking:
                 move = self.ai_return_move
             if move is not None:
                 m = self.game.make_move(move)
+                if m != Move_Type.INVALID:
+                    ev.set()
                 if m == Move_Type.WIN:
                     win_side = -self.game.side_to_move
                     break
