@@ -9,16 +9,6 @@ from .utils import rc_2_pos
 from .base import Block_State, Position, Move, Move_Type
 
 
-# def _bg_move(game, side_to_move, move):
-#     player = game.red_player if game.side_to_move == RED else game.black_player
-#     if player.type == Agent_Type.HUMAN:
-#         return
-#     elif player.is_thinking:
-#         return
-#     game_state = game.get_state()
-#     move = player.make_move(game_state, side_to_move)
-
-
 def _bg_move(kg):
     game, side_to_move = kg.game, kg.game.side_to_move
     player = game.red_player if game.side_to_move == RED else game.black_player
@@ -54,13 +44,8 @@ class KingGame:
         win_side = None
         while True:
             move = None
-            # player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
-            # if player.type == Agent_Type.AI:
-            #     game_state = self.game.get_state()
-            #     move = player.make_move(game_state, self.game.side_to_move)
-            #     time.sleep(1)
             bg_thread = threading.Thread(target=_bg_move, args=(self,))
-            # bg_thread.setDaemon(True)
+            bg_thread.setDaemon(True)
             bg_thread.start()
             while True:
                 for event in pygame.event.get():
