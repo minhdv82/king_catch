@@ -62,9 +62,20 @@ class AI(Agent):
     def __init__(self) -> None:
         super().__init__()
         self.type = Agent_Type.AI
+        self._thinking = False
+
+    @property
+    def is_thinking(self):
+        return self._thinking
+
     def make_move(self, game_state: Game_State, side_to_move: int) -> Move:
+        if self._thinking:
+            return None
         # return self._random_search(game_state, side_to_move)
-        return self._alpha_beta_search(game_state, side_to_move)
+        self._thinking = True
+        move = self._alpha_beta_search(game_state, side_to_move)
+        self._thinking = False
+        return move
     
     def _random_search(self, game_state: Game_State, side_to_move: int) -> Move:
         moves = gen_moves(game_state.blocks, game_state.king_us_pos)
@@ -75,11 +86,9 @@ class AI(Agent):
     def _alpha_beta_search(self, game_state: Game_State, side_to_move: int):
         def _minimax(depth, game_state: Game_State, lo, hi):
             opt_val = eval_state(game_state)
-            if depth == 0 or opt_val == LOSS:
+            if depth == 0 or opt_val == LOSS or opt_val == WIN:
                 return (opt_val, None)
             moves = gen_moves(game_state.blocks, game_state.king_us_pos)
-            if len(moves) == 0:
-                return (LOSS, None)
             opt_val, opt_move = WIN, None
             for move in moves:
                 do_move(game_state, move)
@@ -87,7 +96,7 @@ class AI(Agent):
                 undo_move(game_state)
                 if res <= LOSS:
                     return (WIN, move)
-                if res < opt_val:
+                if res <= opt_val:
                     opt_val = res
                     opt_move = move
             return (-opt_val, opt_move)
@@ -109,6 +118,10 @@ class AI(Agent):
         else:
             move = gen_moves(game_state.blocks, game_state.king_us_pos)[0]
             move = Position(move.row, move.col)
+        if opt_val == WIN:
+            print('win')
+        elif opt_val == LOSS:
+            print('lose')
 
         return Move(side_to_move, move)
 

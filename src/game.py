@@ -5,7 +5,7 @@ from .agent import *
 
 
 class Game:
-    def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.MAN_VS_AI, game_type=Game_Type.VISIBLE) -> None:
+    def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.AI_VS_AI, game_type=Game_Type.VISIBLE) -> None:
         self.game_mode = game_mode
         self.game_type = game_type
         self.games_played = 1
@@ -23,6 +23,11 @@ class Game:
     @property
     def side_to_move(self):
         return self.board.side_to_move
+
+    @property
+    def is_human_turn(self):
+        return (self.side_to_move == RED and self.red_player.type == Agent_Type.HUMAN) or \
+            (self.side_to_move == BLACK and self.black_player.type == Agent_Type.HUMAN)
 
     def init_players(self):
         if self.game_mode == Game_Mode.MAN_VS_MAN:
@@ -80,3 +85,7 @@ class Game:
                 win_side = self.side_to_move
                 break
         self.game_over(win_side=win_side)
+
+    def get_state(self):
+        return self.board.get_state(self.game_type)
+    

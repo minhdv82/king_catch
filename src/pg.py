@@ -1,4 +1,6 @@
 import time
+import threading
+
 import pygame
 
 from .game import Game
@@ -6,6 +8,29 @@ from .configs import *
 from .utils import rc_2_pos
 from .base import Block_State, Position, Move, Move_Type
 
+
+# def _bg_move(game, side_to_move, move):
+#     player = game.red_player if game.side_to_move == RED else game.black_player
+#     if player.type == Agent_Type.HUMAN:
+#         return
+#     elif player.is_thinking:
+#         return
+#     game_state = game.get_state()
+#     move = player.make_move(game_state, side_to_move)
+
+
+def _bg_move(kg):
+    game, side_to_move = kg.game, kg.game.side_to_move
+    player = game.red_player if game.side_to_move == RED else game.black_player
+    if player.type == Agent_Type.HUMAN:
+        return
+    elif player.is_thinking:
+        return
+    kg.ai_is_thinking = True
+    kg.ai_return_move = None
+    game_state = game.get_state()
+    kg.ai_return_move = player.make_move(game_state, side_to_move)
+    kg.ai_is_thinking = False
 
 class KingGame:
     def __init__(self, game: Game=None) -> None:
@@ -20,21 +45,24 @@ class KingGame:
 
         self.cursor = Position(0, 0)
 
+        self.ai_is_thinking = False
+        self.ai_return_move = None
+
     def play(self):
-        self.draw()
+        self.render()
         pygame.display.update()
         win_side = None
         while True:
-            if self.game.board.check_lose(self.game.side_to_move):
-                win_side =  -self.game.side_to_move
-                break
             move = None
-            player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
-            if player.type == Agent_Type.AI:
-                game_state = self.game.board.get_state(game_type=self.game.game_type)
-                move = player.make_move(game_state, self.game.side_to_move)
-                time.sleep(1)
-            else:
+            # player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
+            # if player.type == Agent_Type.AI:
+            #     game_state = self.game.get_state()
+            #     move = player.make_move(game_state, self.game.side_to_move)
+            #     time.sleep(1)
+            bg_thread = threading.Thread(target=_bg_move, args=(self,))
+            # bg_thread.setDaemon(True)
+            bg_thread.start()
+            while True:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         self.quit()
@@ -47,14 +75,26 @@ class KingGame:
                             self.cursor.col = (self.cursor.col + NUM_COLS - 1) % NUM_COLS
                         elif event.key == pygame.K_RIGHT:
                             self.cursor.col = (self.cursor.col + 1) % NUM_COLS
-                        elif event.key == pygame.K_RETURN:       
+                        elif event.key == pygame.K_RETURN and self.game.is_human_turn:
                             move = Move(side=self.game.side_to_move, pos=self.cursor)
+                            if self.game.board.check_move(move) != Move_Type.INVALID:
+                                break
+                            else:
+                                move = None
+                self.render()
+                pygame.display.update()
+                if not self.ai_is_thinking:
+                    break
+
+            bg_thread.join()
+            if not self.game.is_human_turn:
+                move = self.ai_return_move
             if move is not None:
                 m = self.game.make_move(move)
                 if m == Move_Type.WIN:
                     win_side = -self.game.side_to_move
                     break
-            self.draw()
+            self.render()
             pygame.display.update()
         self.game_over(win_side=win_side)
             
@@ -63,11 +103,12 @@ class KingGame:
         self.play()
 
     def quit(self):
-        # self.game.quit()
+        if self.game is not None:
+            del self.game
         pygame.quit()
         exit()
 
-    def draw(self):
+    def render(self):
         blocks = self.game.board.blocks
         wsz, hsz = SCR_WIDTH // NUM_COLS, SCR_HEIGHT // NUM_ROWS
         for r in range(NUM_ROWS):
@@ -78,8 +119,12 @@ class KingGame:
             pygame.draw.rect(self.screen, (255, 10, 20), (self.game.board.red_king_pos.col * wsz, self.game.board.red_king_pos.row * hsz, hsz, wsz))
         if self.game.game_type == Game_Type.VISIBLE or (self.game.side_to_move == BLACK and self.game.black_player.type == Agent_Type.HUMAN):
             pygame.draw.rect(self.screen, (5, 5, 5), (self.game.board.black_king_pos.col * wsz, self.game.board.black_king_pos.row * hsz, hsz, wsz))
-        if self.game.game_mode != Game_Mode.AI_VS_AI:
-            pygame.draw.rect(self.screen, (255, 192, 203), (self.cursor.col * wsz, self.cursor.row * hsz, hsz, wsz))
+        # if self.current_player.type == Agent_Type.HUMAN:
+        pygame.draw.rect(self.screen, (255, 192, 203), (self.cursor.col * wsz, self.cursor.row * hsz, hsz, wsz))
+
+    @property
+    def current_player(self):
+        return self.game.red_player if self.game.side_to_move == RED else self.game.black_player
 
     def update(self):
         pass
