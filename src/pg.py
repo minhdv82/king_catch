@@ -20,6 +20,7 @@ def _ai_move(kg):
     kg.ai_is_thinking = True
     kg.ai_return_move = None
     game_state = game.get_state()
+    time.sleep(1)
     kg.ai_return_move = player.make_move(game_state, side_to_move)
     kg.ai_is_thinking = False
 

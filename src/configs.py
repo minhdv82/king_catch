@@ -9,7 +9,7 @@ SCR_WIDTH, SCR_HEIGHT = 600, 600
 FOG_COLOR = 'Brown'
 UNFOG_COLOR = 'Blue'
 
-AI_DEPTH = 16
+AI_DEPTH = 14
 
 class Game_Mode(Enum):
     MAN_VS_MAN = 0

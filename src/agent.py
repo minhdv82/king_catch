@@ -133,6 +133,44 @@ class AI(Agent):
 
 
     def alpha_beta(self, game_state: Game_State, side_to_move: int):
+        def _pvs(game_state: Game_State, depth: int, lo: int, hi: int):
+            if depth <= 0:
+                return (eval_state(game_state), [])
+            moves = gen_moves(game_state.blocks, game_state.king_us_pos)
+            if not len(moves):
+                return (LOSS, [])
+            opt_move = moves.pop()
+            do_move(game_state, opt_move)
+            opt_val, opt_seq = _pvs(game_state, depth - 1, -hi, -lo)
+            opt_val = -opt_val
+            undo_move(game_state)
+            if opt_val > lo:
+                if opt_val >= hi:
+                    opt_seq.append(opt_move)
+                    return (opt_val, opt_seq)
+                lo = opt_val
+
+            for move in moves:
+                do_move(game_state, move)
+                val, seq = _pvs(game_state, depth - 1, -lo - 1, -lo)
+                val = -val
+                if val > lo and val < hi:
+                    val, seq = _pvs(game_state, depth - 1, -hi, -lo)
+                    val *= -1
+                    if val > lo:
+                        lo = val
+                        # opt_move = move
+                undo_move(game_state)
+                if val > opt_val:
+                    opt_seq = seq
+                    opt_move = move
+                    if val >= hi:
+                        opt_seq.append(opt_move)
+                        return (val, opt_seq)
+                    opt_val = val
+            opt_seq.append(opt_move)
+            return (opt_val, opt_seq)
+
         def _alpha_beta(game_state: Game_State, depth: int, lo: int, hi: int, lohi: int):
             if game_state.king_them_pos == game_state.king_us_pos:
                 return (LOSS * lohi, [])
@@ -162,7 +200,7 @@ class AI(Agent):
                     do_move(game_state, move)
                     val, seq = _alpha_beta(game_state, depth - 1, lo, hi, -lohi)
                     undo_move(game_state)
-                    if val < opt_val or (val == opt_val and len(seq) > len(opt_seq)):
+                    if val < opt_val or (val == opt_val and len(seq) < len(opt_seq)):
                         seq.append(move)
                         opt_val = val
                         opt_seq = seq
@@ -171,7 +209,8 @@ class AI(Agent):
                         return (opt_val, opt_seq)
                 return (opt_val, opt_seq)
 
-        opt_val, opt_move = _alpha_beta(game_state, AI_DEPTH, LOSS, WIN, 1)
+        # opt_val, opt_move = _alpha_beta(game_state, AI_DEPTH, LOSS, WIN, 1)
+        opt_val, opt_move = _pvs(game_state, AI_DEPTH, LOSS, WIN)
         if opt_move:
             opt_move = opt_move[::-1]
             move = Position(opt_move[0].row, opt_move[0].col)
