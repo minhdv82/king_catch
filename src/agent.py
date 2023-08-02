@@ -209,8 +209,8 @@ class AI(Agent):
                         return (opt_val, opt_seq)
                 return (opt_val, opt_seq)
 
-        # opt_val, opt_move = _alpha_beta(game_state, AI_DEPTH, LOSS, WIN, 1)
-        opt_val, opt_move = _pvs(game_state, AI_DEPTH, LOSS, WIN)
+        opt_val, opt_move = _alpha_beta(game_state, AI_DEPTH, LOSS, WIN, 1)
+        # opt_val, opt_move = _pvs(game_state, AI_DEPTH, LOSS, WIN)
         if opt_move:
             opt_move = opt_move[::-1]
             move = Position(opt_move[0].row, opt_move[0].col)
