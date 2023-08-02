@@ -7,6 +7,8 @@ from .game import Game
 from .configs import *
 from .utils import rc_2_pos
 from .base import Block_State, Position, Move, Move_Type
+from .clock import TimeControl
+
 
 ev = Event()
 ev.set()
@@ -30,22 +32,24 @@ class KingGame:
         pygame.init()
         self.screen = pygame.display.set_mode((SCR_WIDTH, SCR_HEIGHT))
         pygame.display.set_caption('King_Catch')
-
         if game is not None:
             self.game = game
         else:
             self.game = Game()
-
         self.cursor = Position(0, 0)
-
         self.ai_is_thinking = False
         self.ai_return_move = None
+        self.time_control = TimeControl(total_time=GAME_TIME*SEC_TO_TICKS, inc_per_move=2*SEC_TO_TICKS, num_players=2)
 
     def play(self):
         self.render()
         pygame.display.update()
         win_side = None
         while True:
+            self.time_control.tick()
+            if self.time_control.is_time_over:
+                win_side = -self.game.side_to_move
+                break
             move = None
             player = self.game.red_player if self.game.side_to_move == RED else self.game.black_player
             if player.type == Agent_Type.AI and ev.is_set() and not self.ai_is_thinking:
@@ -72,6 +76,7 @@ class KingGame:
             if move is not None:
                 m = self.game.make_move(move)
                 if m != Move_Type.INVALID:
+                    self.time_control.move()
                     ev.set()
                 if m == Move_Type.WIN:
                     win_side = -self.game.side_to_move

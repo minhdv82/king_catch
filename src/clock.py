@@ -20,10 +20,11 @@ class Clock:
 
 
 class TimeControl:
-    def __init__(self, total_time: int, inc_per_move: int=0, num_players: int=2) -> None:
+    def __init__(self, total_time: int, inc_per_move: int=0, num_players: int=2, sec_to_ticks: int=60) -> None:
         self.num_players = num_players
-        self._clocks = [Clock(total_time, inc_per_move) for _ in range(num_players)]
+        self._clocks = [Clock(total_time, inc_per_move, num_players) for _ in range(num_players)]
         self.player_to_move = 0
+        self._sec_to_ticks = sec_to_ticks
 
     def tick(self):
         self._clocks[self.player_to_move].tick()
