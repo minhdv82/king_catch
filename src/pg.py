@@ -15,7 +15,6 @@ ev.set()
 
 
 def _ai_move(kg):
-    # print('called')
     ev.clear()
     game, side_to_move = kg.game, kg.game.side_to_move
     player = game.red_player if game.side_to_move == RED else game.black_player
@@ -39,7 +38,7 @@ class KingGame:
         self.cursor = Position(0, 0)
         self.ai_is_thinking = False
         self.ai_return_move = None
-        self.time_control = TimeControl(total_time=GAME_TIME*SEC_TO_TICKS, inc_per_move=2*SEC_TO_TICKS, num_players=2)
+        self.time_control = TimeControl(total_time=GAME_TIME, inc_per_move=2, num_players=2)
 
     def play(self):
         self.render()
@@ -87,6 +86,7 @@ class KingGame:
             
     def reset(self):
         self.game.reset()
+        self.time_control.reset()
         self.play()
 
     def quit(self):
