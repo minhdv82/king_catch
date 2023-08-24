@@ -3,7 +3,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 from .configs import *
-from .utils import rc_2_pos
+# from .utils import rc_2_pos
 
 
 @dataclass
@@ -41,31 +41,37 @@ class Block:
 
 @dataclass
 class Game_State:
-    blocks: List[Block_State]
+    blocks: List[List[Block_State]]
     traces: List[Position]
     king_us_pos: Position
     king_them_pos: Position
+    num_rows: int=NUM_ROWS
+    num_cols: int=NUM_COLS
 
 
 class Board:
-    def __init__(self, red_king_pos: Position, black_king_pos: Position, side_to_move: int=RED) -> None:
-        self.blocks = [Block] * NUM_BLOCKS
-        self.red_king_pos, self.black_king_pos = red_king_pos, black_king_pos
-        self.side_to_move = side_to_move
+    def __init__(self, num_rows: int=NUM_ROWS, num_cols: int=NUM_COLS, red_king_pos: Position = None, black_king_pos: Position = None,
+                 side_to_move: int=RED, blocks: List[Block]=None) -> None:
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.num_blocks = self.num_rows * self.num_cols
         self.traces = []
-        self.reset()
-
-    def reset(self, red_king_pos: Position=None, black_king_pos: Position=None, side_to_move: int=RED) -> None:
-        for row in range(NUM_ROWS):
-            for col in range(NUM_COLS):
-                pos = rc_2_pos(row, col)
-                block = Block(Block_State.FOG, Position(row=row, col=col))
-                self.blocks[pos] = block
-        if red_king_pos is not None:
-            self.red_king_pos = red_king_pos
-        if black_king_pos is not None:
-            self.black_king_pos = black_king_pos
+        self.red_king_pos = red_king_pos
+        self.black_king_pos = black_king_pos
         self.side_to_move = side_to_move
+        if blocks is None:
+            self.blocks = [[Block] * self.num_cols for _ in range(self.num_rows)]
+            self.reset(red_king_pos, black_king_pos)
+        else:
+            self.blocks = blocks
+
+    def reset(self, red_king_pos, black_king_pos) -> None:
+        for row in range(self.num_rows):
+            for col in range(self.num_cols):
+                block = Block(Block_State.FOG, Position(row=row, col=col))
+                self.blocks[row][col] = block
+        self.red_king_pos = red_king_pos
+        self.black_king_pos = black_king_pos
 
     def switch_side(self):
         self.side_to_move = -self.side_to_move
@@ -73,14 +79,12 @@ class Board:
     def count_move(self, position: Position) -> int:
         res = 0
         row, col = position.row, position.col
-        cur_pos = rc_2_pos(row, col)
         for r in [-1, 0, 1]:
             for c in [-1, 0, 1]:
-                if -1 < row + r < NUM_ROWS and -1 < col + c < NUM_COLS:
-                    pos = rc_2_pos(row + r, col + c)
-                    if pos == cur_pos:
+                if -1 < row + r < self.num_rows and -1 < col + c < self.num_cols:
+                    if r == 0 and c == 0:
                         continue
-                    if self.blocks[pos].state != Block_State.UNFOG:
+                    if self.blocks[row + r][col + c].state != Block_State.UNFOG:
                         res += 1
         return res
 
@@ -88,14 +92,12 @@ class Board:
         res = []
         king_pos = self.red_king_pos if side_to_move == RED else self.black_king_pos
         row, col = king_pos.row, king_pos.col
-        cur_pos = rc_2_pos(row, col)
         for r in [-1, 0, 1]:
             for c in [-1, 0, 1]:
-                if -1 < row + r < NUM_ROWS and -1 < col + c < NUM_COLS:
-                    pos = rc_2_pos(row + r, col + c)
-                    if pos == cur_pos:
+                if -1 < row + r < self.num_rows and -1 < col + c < NUM_COLS:
+                    if r == 0 and c == 0:
                         continue
-                    if self.blocks[pos].state != Block_State.UNFOG:
+                    if self.blocks[row + r][col + c].state != Block_State.UNFOG:
                         res.append(Position(row + r, col + c))
         return res
 
@@ -105,14 +107,14 @@ class Board:
 
     def check_board(self, pos: Position) -> bool:
         row, col = pos.row, pos.col
-        return -1 < row < NUM_ROWS and -1 < col < NUM_COLS
+        return -1 < row < self.num_rows and -1 < col < self.num_cols
 
     def distance(self, p: Position, q: Position) -> int:
         return (p.row - q.row)**2 + (p.col - q.col)**2
 
     def check_move(self, move: Move) -> Move_Type:
         side, pos = move.side, move.pos
-        if side != self.side_to_move or self.blocks[rc_2_pos(pos.row, pos.col)].state == Block_State.UNFOG:
+        if side != self.side_to_move or self.blocks[pos.row][pos.col].state == Block_State.UNFOG:
             return Move_Type.INVALID
         if side == RED:
             king_us_pos, king_them_pos = self.red_king_pos, self.black_king_pos
@@ -129,7 +131,7 @@ class Board:
         m = self.check_move(move)
         if m != Move_Type.INVALID:
             king_pos = self.red_king_pos if move.side == RED else self.black_king_pos
-            self.blocks[rc_2_pos(king_pos.row, king_pos.col)].state = Block_State.UNFOG
+            self.blocks[king_pos.row][king_pos.col].state = Block_State.UNFOG
             self.traces.append(Position(king_pos.row, king_pos.col))
             if verbose:
                 print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
@@ -141,17 +143,31 @@ class Board:
             print('Invalid move!')
         return m
 
+    def force_move(self, move: Move, m: Move_Type, verbose: bool=False):
+        king_pos = self.red_king_pos if move.side == RED else self.black_king_pos
+        if king_pos is None:
+            self.blocks[move.pos.row][move.pos.col].state = Block_State.UNFOG
+            self.traces.append(Position(move.pos.row, move.pos.col))
+        else:
+            self.blocks[king_pos.row][king_pos.col].state = Block_State.UNFOG
+            self.traces.append(Position(king_pos.row, king_pos.col))
+            if verbose:
+                print('King moves from {} {} to {} {}'.format(king_pos.row, king_pos.col, move.pos.row, move.pos.col))
+            king_pos.row, king_pos.col = move.pos.row, move.pos.col
+
+        self.switch_side()
+        return m
+
     def draw(self):
         red_king_pos, black_king_pos = self.red_king_pos, self.black_king_pos
-        rp, bp = rc_2_pos(red_king_pos.row, red_king_pos.col), rc_2_pos(black_king_pos.row, black_king_pos.col)
-        for row in range(NUM_ROWS):
-            for col in range(NUM_COLS):
-                pos = rc_2_pos(row, col)
-                if pos == rp:
+        for row in range(self.num_rows):
+            for col in range(self.self.num_cols):
+                pos = Position(row, col)
+                if pos == red_king_pos:
                     print(' K ', end='')
-                elif pos == bp:
+                elif pos == black_king_pos:
                     print(' k ', end='')
-                elif self.blocks[pos].state == Block_State.FOG:
+                elif self.blocks[row][col].state == Block_State.FOG:
                     print(' * ', end='')
                 else:
                     print(' - ', end='')
@@ -173,4 +189,5 @@ class Board:
         for trace in self.traces:
             trs.append(Position(trace.row, trace.col))
 
-        return Game_State(blocks=blks, traces=trs, king_us_pos=king_us_pos, king_them_pos=king_them_pos)
+        return Game_State(blocks=blks, traces=trs, king_us_pos=king_us_pos, king_them_pos=king_them_pos,
+                          num_rows=self.num_rows, num_cols=self.num_cols)

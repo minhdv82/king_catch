@@ -2,22 +2,91 @@ from abc import ABC, abstractmethod
 
 from .configs import Agent_Type, AI_DEPTH
 from .base import *
+from .utils import threaded
+from .game_model import KingGameModel
+from .network import GameClient, GamePacket, MovePacket
 
 
 LOSS, WIN = -1000_000, 1000_000
 
 
-def gen_moves(blocks, pos):
+def agent_make_move(agent):
+    agent.make_move()
+
+
+class Agent(ABC):
+    def __init__(self) -> None:
+        self.type = None
+    
+    @abstractmethod
+    def get_move(self) -> Move:
+        raise NotImplementedError("Please implement the method!")
+
+
+class Human(Agent):
+    def __init__(self, game_view) -> None:
+        super().__init__()
+        self.type = Agent_Type.HUMAN
+        self._game_view = game_view
+
+    def get_move(self):
+        return self._game_view.get_move()
+
+
+class Bot(Agent):
+    def __init__(self, client: GameClient=None) -> None:
+        super().__init__()
+        self.type = Agent_Type.BOT
+        self._client = client
+        self._busy = False
+        self._data_buffer = []
+
+    @property
+    def is_busy(self):
+        return self._busy
+
+    def _pop_data(self):
+        return self._data_buffer.pop() if self._data_buffer else None
+
+    def get_move(self):
+        if self._client is None:
+            return None
+        return self._client.get_move()
+
+    def get_game(self):
+        return self._client.get_game()
+        # if self.is_busy:
+        #     return None
+        # if self._data_buffer:
+        #     res = self._pop_data()
+        #     return res if isinstance(res, GamePacket) else None
+        # self._get_data()
+        # return None
+
+    # @threaded
+    # def _get_data(self):
+    #     self._busy = True
+    #     self._data_buffer.append(self._client.recv())
+    #     self._busy = False
+
+    # @threaded
+    def send_move(self, move):
+        self._client.send_move(move)
+
+    # @threaded
+    def send_game(self, game_packet):
+        self._client.send_game(game_packet)
+
+
+def gen_moves(blocks, pos, num_rows=NUM_ROWS, num_cols=NUM_COLS):
     row, col = pos.row, pos.col
-    cur_pos = rc_2_pos(row, col)
     res = []
     for r in [-1, 0, 1]:
         for c in [-1, 0, 1]:
-            if -1 < row + r < NUM_ROWS and -1 < col + c < NUM_COLS:
-                pos = rc_2_pos(row + r, col + c)
-                if pos == cur_pos:
+            if -1 < row + r < num_rows and -1 < col + c < num_cols:
+                if r == 0 and c == 0:
                     continue
-                if blocks[pos] != Block_State.UNFOG:
+                if blocks[row + r][col + c] != Block_State.UNFOG:
                     res.append(Position(row + r, col + c))
     return res
 
@@ -25,7 +94,7 @@ def gen_moves(blocks, pos):
 def do_move(game_state: Game_State, move: Move):
     us_pos, them_pos = game_state.king_us_pos, game_state.king_them_pos
     game_state.traces.append(Position(us_pos.row, us_pos.col))
-    game_state.blocks[rc_2_pos(us_pos.row, us_pos.col)] = Block_State.UNFOG
+    game_state.blocks[us_pos.row][us_pos.col] = Block_State.UNFOG
     us_pos.row, us_pos.col = them_pos.row, them_pos.col
     them_pos.row, them_pos.col = move.row, move.col
 
@@ -34,7 +103,7 @@ def undo_move(game_state: Game_State):
     us_pos, them_pos = game_state.king_us_pos, game_state.king_them_pos
     them_pos.row, them_pos.col = us_pos.row, us_pos.col
     us_pos.row, us_pos.col = game_state.traces[-1].row, game_state.traces[-1].col
-    game_state.blocks[rc_2_pos(them_pos.row, them_pos.col)] = Block_State.FOG
+    game_state.blocks[them_pos.row][them_pos.col] = Block_State.FOG
     game_state.traces.pop()
 
 
@@ -49,35 +118,34 @@ def eval_state(game_state: Game_State) -> int:
     return len(moves_us) - len(moves_them)
 
 
-class Agent(ABC):
-    def __init__(self) -> None:
-        self.type = None
-    
-    @abstractmethod
-    def make_move(self, game_state: Game_State) -> Move:
-        raise NotImplementedError
-
-
 class AI(Agent):
-    def __init__(self) -> None:
+    def __init__(self, game: KingGameModel) -> None:
         super().__init__()
         self.type = Agent_Type.AI
+        self._game = game
         self._thinking = False
-
+        self._move_buffer = []
     @property
     def is_thinking(self):
         return self._thinking
 
-    def make_move(self, game_state: Game_State, side_to_move: int) -> Move:
-        if self._thinking:
-            return None
+    def _pop_move(self):
+        return self._move_buffer.pop() if self._move_buffer else None
+
+    def get_move(self):
+        if not self.is_thinking:
+            return self._pop_move()
+        self._make_move()
+        return None
+
+    def _make_move(self):
         self._thinking = True
-        move = self.alpha_beta(game_state, side_to_move)
+        game_state, side_to_move = self._game.get_state(), self._game.side_to_move
+        self._move_buffer.append(self.alpha_beta(game_state, side_to_move))
         self._thinking = False
-        return move
     
     def _random_search(self, game_state: Game_State, side_to_move: int) -> Move:
-        moves = gen_moves(game_state.blocks, game_state.king_us_pos)
+        moves = gen_moves(game_state.blocks, game_state.king_us_pos, game_state.num_rows, game_state.num_cols)
         if moves is not None:
             return Move(side_to_move, Position(moves[0].row, moves[0].col))
         return None
@@ -227,20 +295,3 @@ class AI(Agent):
             print(opt_move[:l])
 
         return Move(side_to_move, move)
-
-
-class Human(Agent):
-    def __init__(self, interface='gui') -> None:
-        super().__init__()
-        self.type = Agent_Type.HUMAN
-        self.interface = interface
-
-    def make_move(self, game_state: Game_State, side_to_move: int) -> Move:
-        if self.interface == 'gui':
-            return None
-        while True:
-            s = input('Please make a move: ')
-            s = s.split()
-            row, col = int(s[0]), int(s[1])
-            move = Move(side=side_to_move, pos=Position(row, col))
-            return move

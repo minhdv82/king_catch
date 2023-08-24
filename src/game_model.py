@@ -1,48 +1,33 @@
 
 from .configs import *
 from .base import *
-from .agent import *
 
 
-class Game:
-    def __init__(self, board: Board=None, side_to_move=RED, game_mode=Game_Mode.MAN_VS_AI, game_type=Game_Type.VISIBLE) -> None:
-        self.game_mode = game_mode
-        self.game_type = game_type
+class KingGameModel:
+    def __init__(self, board: Board=None, game_mode=Game_Mode.MAN_VS_AI,
+                 game_type=Game_Type.VISIBLE) -> None:
+        self.game_mode = Game_Mode(game_mode)
+        self.game_type = Game_Type(game_type)
         self.games_played = 1
         self.red_wins = 0
         self.black_wins = 0
-        self.red_player = None
-        self.black_player = None
         if board is not None:
             self.board = board
         else:
             red_king_pos, black_king_pos = self.random_kings()
-            self.board = Board(red_king_pos=red_king_pos, black_king_pos=black_king_pos, side_to_move=side_to_move)
-        self.init_players()
+            self.board = Board(red_king_pos=red_king_pos, black_king_pos=black_king_pos)
+
+    @classmethod
+    def init_client(cls, board: Board):
+        return KingGameModel(board=board)
 
     @property
     def side_to_move(self):
         return self.board.side_to_move
 
-    @property
-    def is_human_turn(self):
-        return (self.side_to_move == RED and self.red_player.type == Agent_Type.HUMAN) or \
-            (self.side_to_move == BLACK and self.black_player.type == Agent_Type.HUMAN)
-
-    def init_players(self):
-        if self.game_mode == Game_Mode.MAN_VS_MAN:
-            self.red_player = Human()
-            self.black_player = Human()
-        elif self.game_mode == Game_Mode.AI_VS_AI:
-            self.red_player = AI()
-            self.black_player = AI()
-        else:
-            self.red_player = Human()
-            self.black_player = AI()
-
     def reset(self, side_to_move: int=RED) -> None:
         red_king_pos, black_king_pos = self.random_kings()
-        self.board.reset(red_king_pos=red_king_pos, black_king_pos=black_king_pos, side_to_move=side_to_move)
+        self.board.reset(red_king_pos=red_king_pos, black_king_pos=black_king_pos)
     
     @staticmethod
     def random_kings():
@@ -89,3 +74,5 @@ class Game:
     def get_state(self):
         return self.board.get_state(self.game_type)
     
+    def check_move(self, move: Move):
+        return self.board.check_move(move)
