@@ -1,3 +1,9 @@
+"""
+ * Copyright (c) [2023] Minh v. Duong; dvminh82@gmail.com
+ *
+ * You are free to use, modify, re-distribute this code at your own risk
+ */
+"""
 import pygame
 
 from .configs import *
@@ -12,6 +18,11 @@ class KingGameView:
         self.scr_height = scr_height
         self.network = Game_Network(network)
         self.screen = pygame.display.set_mode((scr_width, scr_height))
+        self.title = 'King_Catch'
+        if self.network == Game_Network.client:
+            self.title += '_client'
+        elif self.network == Game_Network.server:
+            self.title += '_server'
         pygame.display.set_caption('King_Catch')
 
         self.cursor = Position(0, 0)
