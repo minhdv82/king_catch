@@ -58,11 +58,11 @@ class KingGameController:
                 self.red_player = Human(self.game_view)
                 self.black_player = Human(self.game_view)
             elif self.game_mode == Game_Mode.AI_VS_AI:
-                self.red_player = AI(self.game)
-                self.black_player = AI(self.game)
+                self.red_player = AI()
+                self.black_player = AI()
             else:
                 self.red_player = Human(self.game_view)
-                self.black_player = AI(self.game)
+                self.black_player = AI()
         elif self.network == Game_Network.server:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.bind((self.host, self.port))

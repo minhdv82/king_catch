@@ -97,14 +97,14 @@ def gen_moves(blocks, pos, num_rows=NUM_ROWS, num_cols=NUM_COLS):
     return res
 
 
-def do_move(game_state: Game_State, move: Move):
-    us_pos = game_state.red_king_pos if move.side == RED else game_state.black_king_pos
+def do_move(game_state: Game_State, move_pos: Position):
+    us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos
     game_state.traces.append(Position(us_pos.row, us_pos.col))
     game_state.blocks[us_pos.row][us_pos.col] = Block_State.UNFOG
-    if move.side == RED:
-        game_state.red_king_pos = Position(move.pos.row, move.pos.col)
+    if game_state.side_to_move == RED:
+        game_state.red_king_pos = Position(row=move_pos.row, col=move_pos.col)
     else:
-        game_state.black_king_pos = Position(move.pos.row, move.pos.col)
+        game_state.black_king_pos = Position(row=move_pos.row, col=move_pos.col)
     game_state.side_to_move = -game_state.side_to_move
 
 
@@ -134,10 +134,9 @@ def eval_state(game_state: Game_State) -> int:
 
 
 class AI(Agent):
-    def __init__(self, game: KingGameModel) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.type = Agent_Type.AI
-        self._game = game
         self._thinking = False
         self._move_buffer = []
 
@@ -152,11 +151,14 @@ class AI(Agent):
     def _pop_move(self):
         return self._move_buffer.pop() if self._move_buffer else None
 
-    def get_move(self):
+    def get_move(self, game_state: Game_State):
         if not self.is_thinking:
             return self._pop_move()
-        self._make_move()
+        self._make_move(game_state)
         return None
+
+    def get_move_now(self, game_state: Game_State):
+        return self.alpha_beta(game_state)
 
     def _make_move(self, game_state: Game_State):
         self._thinking = True
@@ -216,10 +218,10 @@ class AI(Agent):
             l = min(8, len(opt_move))
             print(opt_move[:l])
 
-        return Move(side_to_move, move)
+        return Move(game_state.side_to_move, move)
 
 
-    def alpha_beta(self, game_state: Game_State, side_to_move: int):
+    def alpha_beta(self, game_state: Game_State):
         def _pvs(game_state: Game_State, depth: int, lo: int, hi: int):
             if depth <= 0:
                 return (eval_state(game_state), [])
@@ -259,11 +261,13 @@ class AI(Agent):
             return (opt_val, opt_seq)
 
         def _alpha_beta(game_state: Game_State, depth: int, lo: int, hi: int, lohi: int):
-            if game_state.king_them_pos == game_state.king_us_pos:
+            king_us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos
+            king_them_pos = game_state.red_king_pos if game_state.side_to_move == BLACK else game_state.black_king_pos
+            if king_them_pos == king_us_pos:
                 return (LOSS * lohi, [])
             if depth == 0:
                 return (lohi * eval_state(game_state), [])
-            moves = gen_moves(game_state.blocks, game_state.king_us_pos)
+            moves = self.gen_moves(game_state)
             if len(moves) == 0:
                 return (LOSS * lohi, [])
             
@@ -313,4 +317,4 @@ class AI(Agent):
             l = min(8, len(opt_move))
             print(opt_move[:l])
 
-        return Move(side_to_move, move)
+        return Move(game_state.side_to_move, move)

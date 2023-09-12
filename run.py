@@ -10,9 +10,10 @@ from src.game_view import KingGameView
 from src.sim import Simulator
 
 
-def simulate_game():
+def simulate_game(num_games: int = 1):
     sim = Simulator()
-    res = sim.simulate()
+    res = sim.simulate(num_games)
+    print(len(res))
 
 
 def play_game():
@@ -33,4 +34,4 @@ def play_game():
 
 if __name__=='__main__':
     # play_game()
-    simulate_game()
+    simulate_game(5)

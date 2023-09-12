@@ -123,7 +123,7 @@ class Board:
 
     def check_move(self, move: Move) -> Move_Type:
         side, pos = move.side, move.pos
-        if side != self.side_to_move or self.blocks[pos.row][pos.col].state == Block_State.UNFOG:
+        if side != self.side_to_move or self.blocks[pos.row][pos.col] == Block_State.UNFOG:
             return Move_Type.INVALID
         if side == RED:
             king_us_pos, king_them_pos = self.red_king_pos, self.black_king_pos

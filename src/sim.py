@@ -16,7 +16,7 @@ class Simulator:
         if game is None:
             game = KingGameModel(game_mode=Game_Mode.AI_VS_AI, game_type=Game_Type.VISIBLE)
         self._game = game
-        self.player = AI(game)
+        self.player = AI()
 
     def _play_single_game(self, state: Game_State = None) -> Game_Result:
         win_side = None
@@ -26,7 +26,8 @@ class Simulator:
         else:
             self._game.from_state(state)
         while True:
-            move = self.player._make_move()
+            state = self._game.get_state()
+            move = self.player.get_move_now(state)
             m = self._game.make_move(move)
             if m == Move_Type.WIN:
                 win_side = -self._game.side_to_move
