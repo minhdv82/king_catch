@@ -47,12 +47,13 @@ class Block:
 
 @dataclass
 class Game_State:
-    blocks: List[List[Block_State]]
-    traces: List[Position]
-    king_us_pos: Position
-    king_them_pos: Position
     num_rows: int=NUM_ROWS
     num_cols: int=NUM_COLS
+    blocks: List[List[Block_State]]
+    traces: List[Position]
+    red_king_pos: Position
+    black_king_pos: Position
+    side_to_move: int
 
 
 class Board:
@@ -197,3 +198,11 @@ class Board:
 
         return Game_State(blocks=blks, traces=trs, king_us_pos=king_us_pos, king_them_pos=king_them_pos,
                           num_rows=self.num_rows, num_cols=self.num_cols)
+
+    def from_state(self, state: Game_State):
+        self.num_rows = state.num_rows
+        self.num_cols = state.num_cols
+        self.blocks = state.blocks
+        self.red_king_pos = state.red_king_pos
+        self.black_king_pos = state.black_king_pos
+        self.side_to_move = state.side_to_move

@@ -79,5 +79,8 @@ class KingGameModel:
     def get_state(self):
         return self.board.get_state(self.game_type)
     
+    def from_state(self, state: Game_State):
+        self.board.from_state(state)
+
     def check_move(self, move: Move):
         return self.board.check_move(move)
