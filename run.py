@@ -12,8 +12,8 @@ from src.sim import Simulator
 
 def simulate_game(num_games: int = 1):
     sim = Simulator()
-    res = sim.simulate(num_games)
-    print(len(res))
+    # sim.simulate(num_games)
+    sim.resume()
 
 
 def play_game():

@@ -1,5 +1,9 @@
+import os
+
 from dataclasses import dataclass
 from typing import List
+
+import pickle
 
 from .game_model import *
 from .agent import AI
@@ -12,11 +16,15 @@ class Game_Result:
 
 
 class Simulator:
-    def __init__(self, game: KingGameModel = None) -> None:
+    def __init__(self, game: KingGameModel = None, file_name: str = 'sim_run') -> None:
         if game is None:
             game = KingGameModel(game_mode=Game_Mode.AI_VS_AI, game_type=Game_Type.VISIBLE)
         self._game = game
         self.player = AI()
+        f_name = os.path.dirname(os.path.abspath(__file__))
+        f_name = os.path.join(f_name, '../data/')
+        f_name = os.path.abspath(os.path.join(f_name, file_name))
+        self.file_name = f_name
 
     def _play_single_game(self, state: Game_State = None) -> Game_Result:
         win_side = None
@@ -38,18 +46,19 @@ class Simulator:
 
         return Game_Result(state, win_side)
 
-    def simulate(self, num_games: int = 1) -> List[Game_Result]:
-        res = []
+    def simulate(self, num_games: int = 1):
+        games = []
         for _ in range(num_games):
-            res.append(self._play_single_game())
+            games.append(self._play_single_game())
 
-        return res
-    
+        with open(self.file_name, 'wb') as f:
+            pickle.dump(games, f)
+            f.close()
 
-def main():
-    sim = Simulator()
-    res = sim.simulate()
-
-
-if __name__=='__main__':
-    main()
+    def resume(self):
+        with open(self.file_name, 'rb') as f:
+            sim_games = pickle.load(f)
+            for game in sim_games:
+                print(game.win_side)
+            print(len(sim_games))
+            f.close()

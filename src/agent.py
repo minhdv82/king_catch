@@ -134,11 +134,12 @@ def eval_state(game_state: Game_State) -> int:
 
 
 class AI(Agent):
-    def __init__(self) -> None:
+    def __init__(self, verbose: bool = False) -> None:
         super().__init__()
         self.type = Agent_Type.AI
         self._thinking = False
         self._move_buffer = []
+        self.verbose = verbose
 
     def gen_moves(self, game_state: Game_State):
         king_us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos
@@ -308,11 +309,11 @@ class AI(Agent):
         else:
             move = gen_moves(game_state.blocks, game_state.king_us_pos)[0]
             move = Position(move.row, move.col)
-        if opt_val == WIN:
+        if opt_val == WIN and self.verbose:
             print('win')
             l = min(8, len(opt_move))
             print(opt_move[:l])
-        elif opt_val == LOSS:
+        if opt_val == LOSS and self.verbose:
             print('lose')
             l = min(8, len(opt_move))
             print(opt_move[:l])
