@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 from .game_model import *
 from .agent import AI
@@ -36,9 +37,9 @@ class Simulator:
 
         return Game_Result(state, win_side)
 
-    def simulate(self, num_games: int = 1):
+    def simulate(self, num_games: int = 1) -> List[Game_Result]:
+        res = []
         for _ in range(num_games):
+            res.append(self._play_single_game())
 
-        
-
-    
+        return res
