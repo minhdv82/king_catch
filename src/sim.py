@@ -14,7 +14,7 @@ class Game_Result:
 class Simulator:
     def __init__(self, game: KingGameModel = None) -> None:
         if game is None:
-            game = KingGameModel(game_mode=Game_Mode.AI_VS_AI, game_type=Game_Type.VISIBLE, network=Game_Network.offline)
+            game = KingGameModel(game_mode=Game_Mode.AI_VS_AI, game_type=Game_Type.VISIBLE)
         self._game = game
         self.player = AI(game)
 
@@ -43,3 +43,12 @@ class Simulator:
             res.append(self._play_single_game())
 
         return res
+    
+
+def main():
+    sim = Simulator()
+    res = sim.simulate()
+
+
+if __name__=='__main__':
+    main()

@@ -47,13 +47,13 @@ class Block:
 
 @dataclass
 class Game_State:
-    num_rows: int=NUM_ROWS
-    num_cols: int=NUM_COLS
     blocks: List[List[Block_State]]
     traces: List[Position]
     red_king_pos: Position
     black_king_pos: Position
     side_to_move: int
+    num_rows: int=NUM_ROWS
+    num_cols: int=NUM_COLS
 
 
 class Board:
@@ -95,7 +95,9 @@ class Board:
                         res += 1
         return res
 
-    def get_moves(self, side_to_move: int):
+    def gen_moves(self, side_to_move: int = None):
+        if side_to_move is None:
+            side_to_move = self.side_to_move
         res = []
         king_pos = self.red_king_pos if side_to_move == RED else self.black_king_pos
         row, col = king_pos.row, king_pos.col
@@ -182,22 +184,25 @@ class Board:
         print('')
 
     def get_state(self, game_type=Game_Type.VISIBLE):
-        king_us_pos = Position(self.red_king_pos.row, self.red_king_pos.col) if self.side_to_move == RED else \
-              Position(self.black_king_pos.row, self.black_king_pos.col)
-        if game_type == Game_Type.VISIBLE:
-            king_them_pos = Position(self.black_king_pos.row, self.black_king_pos.col) if self.side_to_move == RED else \
-                Position(self.red_king_pos.row, self.red_king_pos.col)
-        else:
-            king_them_pos = None
-        blks = []
-        trs = []
-        for block in self.blocks:
-            blks.append(block.state)
-        for trace in self.traces:
-            trs.append(Position(trace.row, trace.col))
+        # king_us_pos = Position(self.red_king_pos.row, self.red_king_pos.col) if self.side_to_move == RED else \
+        #       Position(self.black_king_pos.row, self.black_king_pos.col)
+        # if game_type == Game_Type.VISIBLE:
+        #     king_them_pos = Position(self.black_king_pos.row, self.black_king_pos.col) if self.side_to_move == RED else \
+        #         Position(self.red_king_pos.row, self.red_king_pos.col)
+        # else:
+        #     king_them_pos = None
+        # blks = []
+        # trs = []
+        # for block in self.blocks:
+        #     blks.append(block.state)
+        # for trace in self.traces:
+        #     trs.append(Position(trace.row, trace.col))
 
-        return Game_State(blocks=blks, traces=trs, king_us_pos=king_us_pos, king_them_pos=king_them_pos,
-                          num_rows=self.num_rows, num_cols=self.num_cols)
+        # return Game_State(blocks=blks, traces=trs, red_king_pos=self.red_king_pos, black_king_pos=self.black_king_pos,
+        #                   num_rows=self.num_rows, num_cols=self.num_cols)
+    
+        return Game_State(blocks=self.blocks, traces=self.traces, red_king_pos=self.red_king_pos, black_king_pos=self.black_king_pos,
+                          num_rows=self.num_rows, num_cols=self.num_cols, side_to_move=self.side_to_move)
 
     def from_state(self, state: Game_State):
         self.num_rows = state.num_rows

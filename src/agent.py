@@ -98,25 +98,34 @@ def gen_moves(blocks, pos, num_rows=NUM_ROWS, num_cols=NUM_COLS):
 
 
 def do_move(game_state: Game_State, move: Move):
-    us_pos, them_pos = game_state.king_us_pos, game_state.king_them_pos
+    us_pos = game_state.red_king_pos if move.side == RED else game_state.black_king_pos
     game_state.traces.append(Position(us_pos.row, us_pos.col))
     game_state.blocks[us_pos.row][us_pos.col] = Block_State.UNFOG
-    us_pos.row, us_pos.col = them_pos.row, them_pos.col
-    them_pos.row, them_pos.col = move.row, move.col
+    if move.side == RED:
+        game_state.red_king_pos = Position(move.pos.row, move.pos.col)
+    else:
+        game_state.black_king_pos = Position(move.pos.row, move.pos.col)
+    game_state.side_to_move = -game_state.side_to_move
 
 
 def undo_move(game_state: Game_State):
-    us_pos, them_pos = game_state.king_us_pos, game_state.king_them_pos
-    them_pos.row, them_pos.col = us_pos.row, us_pos.col
-    us_pos.row, us_pos.col = game_state.traces[-1].row, game_state.traces[-1].col
-    game_state.blocks[them_pos.row][them_pos.col] = Block_State.FOG
+    if game_state.side_to_move == RED:
+        game_state.black_king_pos = Position(game_state.traces[-1].row, game_state.traces[-1].col)
+        game_state.blocks[game_state.black_king_pos.row][game_state.black_king_pos.col] = Block_State.FOG
+    else:
+        game_state.red_king_pos = Position(game_state.traces[-1].row, game_state.traces[-1].col)
+        game_state.blocks[game_state.red_king_pos.row][game_state.red_king_pos.col] = Block_State.FOG
     game_state.traces.pop()
+    game_state.side_to_move = -game_state.side_to_move
 
 
 def eval_state(game_state: Game_State) -> int:
-    if game_state.king_us_pos == game_state.king_them_pos:
+    king_us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos
+    king_them_pos = game_state.red_king_pos if game_state.side_to_move == BLACK else game_state.black_king_pos
+    if king_us_pos == king_them_pos:
         return LOSS
-    moves_us, moves_them = gen_moves(game_state.blocks, game_state.king_us_pos), gen_moves(game_state.blocks, game_state.king_them_pos)
+    moves_us = gen_moves(game_state.blocks, king_us_pos, game_state.num_rows, game_state.num_cols)
+    moves_them = gen_moves(game_state.blocks, king_them_pos)
     if len(moves_us) == 0:
         return LOSS
     if len(moves_them) == 0:
@@ -131,6 +140,11 @@ class AI(Agent):
         self._game = game
         self._thinking = False
         self._move_buffer = []
+
+    def gen_moves(self, game_state: Game_State):
+        king_us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos
+        return gen_moves(game_state.blocks, king_us_pos, game_state.num_rows, game_state.num_cols)
+
     @property
     def is_thinking(self):
         return self._thinking
@@ -144,24 +158,23 @@ class AI(Agent):
         self._make_move()
         return None
 
-    def _make_move(self):
+    def _make_move(self, game_state: Game_State):
         self._thinking = True
-        game_state, side_to_move = self._game.get_state(), self._game.side_to_move
-        self._move_buffer.append(self.alpha_beta(game_state, side_to_move))
+        self._move_buffer.append(self.alpha_beta(game_state))
         self._thinking = False
     
-    def _random_search(self, game_state: Game_State, side_to_move: int) -> Move:
-        moves = gen_moves(game_state.blocks, game_state.king_us_pos, game_state.num_rows, game_state.num_cols)
+    def _random_search(self, game_state: Game_State) -> Move:
+        moves = self.gen_moves(game_state)
         if moves is not None:
-            return Move(side_to_move, Position(moves[0].row, moves[0].col))
+            return Move(game_state.side_to_move, Position(moves[0].row, moves[0].col))
         return None
     
-    def negamax(self, game_state: Game_State, side_to_move: int) -> Move:
+    def negamax(self, game_state: Game_State) -> Move:
         def _minimax(depth, game_state: Game_State, lo, hi):
             opt_val = eval_state(game_state)
             if depth == 0 or opt_val == LOSS or opt_val == WIN:
                 return (opt_val, [])
-            moves = gen_moves(game_state.blocks, game_state.king_us_pos)
+            moves = self.gen_moves(game_state)
             opt_val, opt_move = WIN, []
             for move in moves:
                 do_move(game_state, move)

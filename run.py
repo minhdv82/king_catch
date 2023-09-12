@@ -7,8 +7,15 @@
 import argparse
 
 from src.game_view import KingGameView
+from src.sim import Simulator
 
-def main():
+
+def simulate_game():
+    sim = Simulator()
+    res = sim.simulate()
+
+
+def play_game():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--network', type=int, choices=[0, 1, 2],
@@ -25,4 +32,5 @@ def main():
 
 
 if __name__=='__main__':
-    main()
+    # play_game()
+    simulate_game()
