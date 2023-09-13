@@ -12,8 +12,8 @@ from src.sim import Simulator
 
 def simulate_game(num_games: int = 1):
     sim = Simulator()
-    # sim.simulate(num_games)
-    sim.resume()
+    sim.simulate(num_games)
+    # sim.resume()
 
 
 def play_game():
@@ -34,4 +34,4 @@ def play_game():
 
 if __name__=='__main__':
     # play_game()
-    simulate_game(5)
+    simulate_game(100)

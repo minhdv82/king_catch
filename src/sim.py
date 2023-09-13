@@ -16,11 +16,11 @@ class Game_Result:
 
 
 class Simulator:
-    def __init__(self, game: KingGameModel = None, file_name: str = 'sim_run') -> None:
+    def __init__(self, game: KingGameModel = None, file_name: str = 'sim_run_nega') -> None:
         if game is None:
             game = KingGameModel(game_mode=Game_Mode.AI_VS_AI, game_type=Game_Type.VISIBLE)
         self._game = game
-        self.player = AI()
+        self.player = AI(stupidity='negamax')
         f_name = os.path.dirname(os.path.abspath(__file__))
         f_name = os.path.join(f_name, '../data/')
         f_name = os.path.abspath(os.path.join(f_name, file_name))

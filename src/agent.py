@@ -6,11 +6,12 @@
 """
 from abc import ABC, abstractmethod
 
+import random
+
 from .configs import Agent_Type, AI_DEPTH
 from .base import *
 from .utils import threaded
-from .game_model import KingGameModel
-from .network import GameClient, GamePacket, MovePacket
+from .network import GameClient
 
 
 LOSS, WIN = -1000_000, 1000_000
@@ -134,12 +135,18 @@ def eval_state(game_state: Game_State) -> int:
 
 
 class AI(Agent):
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(self, verbose: bool = False, stupidity: str = 'negamax') -> None:
         super().__init__()
         self.type = Agent_Type.AI
         self._thinking = False
         self._move_buffer = []
         self.verbose = verbose
+        if stupidity.startswith('rand'):
+            self._search = self._random
+        elif stupidity.startswith('alpha'):
+            self._search = self._alpha_beta
+        else:
+            self._search = self._negamax
 
     def gen_moves(self, game_state: Game_State):
         king_us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos
@@ -159,20 +166,21 @@ class AI(Agent):
         return None
 
     def get_move_now(self, game_state: Game_State):
-        return self.alpha_beta(game_state)
+        return self._search(game_state)
 
     def _make_move(self, game_state: Game_State):
         self._thinking = True
-        self._move_buffer.append(self.alpha_beta(game_state))
+        self._move_buffer.append(self._search(game_state))
         self._thinking = False
     
-    def _random_search(self, game_state: Game_State) -> Move:
+    def _random(self, game_state: Game_State) -> Move:
         moves = self.gen_moves(game_state)
         if moves is not None:
-            return Move(game_state.side_to_move, Position(moves[0].row, moves[0].col))
+            idx = random.randint(0, len(moves) - 1)
+            return Move(game_state.side_to_move, Position(moves[idx].row, moves[idx].col))
         return None
     
-    def negamax(self, game_state: Game_State) -> Move:
+    def _negamax(self, game_state: Game_State) -> Move:
         def _minimax(depth, game_state: Game_State, lo, hi):
             opt_val = eval_state(game_state)
             if depth == 0 or opt_val == LOSS or opt_val == WIN:
@@ -192,7 +200,8 @@ class AI(Agent):
                     opt_move = seq
             return (-opt_val, opt_move)
         
-        if game_state.king_them_pos is None:
+        king_them_pos = game_state.red_king_pos if game_state.side_to_move == BLACK else game_state.black_king_pos
+        if king_them_pos is None:
             opt_val, opt_move = LOSS, None
             last_pos = game_state.traces[-1]
             king_thems = gen_moves(game_state.blocks, last_pos)
@@ -210,11 +219,11 @@ class AI(Agent):
         else:
             move = gen_moves(game_state.blocks, game_state.king_us_pos)[0]
             move = Position(move.row, move.col)
-        if opt_val == WIN:
+        if opt_val == WIN and self.verbose:
             print('win')
             l = min(8, len(opt_move))
             print(opt_move[:l])
-        elif opt_val == LOSS:
+        if opt_val == LOSS and self.verbose:
             print('lose')
             l = min(8, len(opt_move))
             print(opt_move[:l])
@@ -222,7 +231,7 @@ class AI(Agent):
         return Move(game_state.side_to_move, move)
 
 
-    def alpha_beta(self, game_state: Game_State):
+    def _alpha_beta(self, game_state: Game_State):
         def _pvs(game_state: Game_State, depth: int, lo: int, hi: int):
             if depth <= 0:
                 return (eval_state(game_state), [])
