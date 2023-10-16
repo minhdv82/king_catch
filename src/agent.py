@@ -141,12 +141,14 @@ class AI(Agent):
         self._thinking = False
         self._move_buffer = []
         self.verbose = verbose
-        if stupidity.startswith('rand'):
+        if stupidity.startswith('random'):
             self._search = self._random
-        elif stupidity.startswith('alpha'):
+        elif stupidity.startswith('alpha_beat'):
             self._search = self._alpha_beta
-        else:
+        elif stupidity.startswith('negamax'):
             self._search = self._negamax
+        else:
+            raise ValueError("Unknown stupidity: {}".format(stupidity))
 
     def gen_moves(self, game_state: Game_State):
         king_us_pos = game_state.red_king_pos if game_state.side_to_move == RED else game_state.black_king_pos

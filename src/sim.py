@@ -26,6 +26,10 @@ class Simulator:
         f_name = os.path.abspath(os.path.join(f_name, file_name))
         self.file_name = f_name
 
+    @property
+    def num_actions(self):
+        return 8
+
     def _play_single_game(self, state: Game_State = None) -> Game_Result:
         win_side = None
         if state is None:
