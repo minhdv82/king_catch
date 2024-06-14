@@ -33,5 +33,5 @@ def play_game():
 
 
 if __name__=='__main__':
-    # play_game()
-    simulate_game(100)
+    play_game()
+    # simulate_game(100)
